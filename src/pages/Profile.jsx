@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, MapPin, Calendar, Award, Edit2, Save } from 'lucide-react';
+import Navbar from '../components/Navbar';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || 'Travel Enthusiast',
@@ -29,18 +32,22 @@ const Profile = () => {
 
   const handleSave = () => {
     setIsEditing(false);
-    // In future, save to backend
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar onLogout={handleLogout} />
+      
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          {/* Header Section */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-32"></div>
           
           <div className="px-8 pb-8">
-            {/* Profile Picture & Basic Info */}
             <div className="flex items-start justify-between -mt-16 mb-6">
               <div className="flex items-end space-x-4">
                 <div className="bg-white p-2 rounded-full shadow-lg">
@@ -75,7 +82,6 @@ const Profile = () => {
               </button>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <div className="bg-blue-50 p-4 rounded-lg text-center">
                 <div className="text-3xl font-bold text-blue-600">{stats.countriesVisited}</div>
@@ -95,12 +101,9 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Profile Details */}
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -118,9 +121,7 @@ const Profile = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                 {isEditing ? (
                   <input
                     type="email"
@@ -138,9 +139,7 @@ const Profile = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -158,9 +157,7 @@ const Profile = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bio
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
                 {isEditing ? (
                   <textarea
                     name="bio"

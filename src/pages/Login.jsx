@@ -1,110 +1,136 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, Map } from 'lucide-react';
+import { Map, Mail, Lock, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
+    setIsLoading(true);
+
+    if (!email || !password) {
+      setError('Please enter both email and password!');
+      setIsLoading(false);
+      return;
+    }
+
+    const result = await login(email, password);
     
-    // Mock login - in future, this will connect to backend
-    const userData = {
-      id: '1',
-      name: email.split('@')[0],
-      email: email,
-    };
-    
-    login(userData);
-    navigate('/dashboard');
+    if (result.success) {
+      setSuccess('Login successful! Redirecting...');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
+    } else {
+      setError(result.message);
+    }
+    setIsLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-cyan-500 to-teal-400 flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-full">
-              <Map className="w-10 h-10 text-white" />
+            <div className="bg-gradient-to-r from-blue-600 to-cyan-500 p-4 rounded-full shadow-lg">
+              <Map className="w-12 h-12 text-white" />
             </div>
           </div>
-          <h2 className="text-3xl font-bold text-gray-800">Welcome Back</h2>
-          <p className="text-gray-600 mt-2">Login to your travel bucket list</p>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+            Welcome Back
+          </h2>
+          <p className="text-gray-600 mt-2">Continue your travel adventures</p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-red-700 text-sm font-semibold">{error}</p>
+              {error.includes('register') && (
+                <Link to="/register" className="text-red-600 text-xs underline mt-1 inline-block">
+                  Click here to register →
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+            <p className="text-green-700 text-sm">{success}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <Mail className="w-4 h-4 inline mr-1" />
+              Email
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="you@example.com"
-                required
-              />
-            </div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition"
+              placeholder="you@example.com"
+              required
+              disabled={isLoading}
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <Lock className="w-4 h-4 inline mr-1" />
               Password
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                Remember me
-              </label>
-            </div>
-            <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
-              Forgot password?
-            </Link>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition"
+              placeholder="••••••••"
+              required
+              disabled={isLoading}
+            />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition duration-200 shadow-lg"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-4 rounded-xl font-bold text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Sign In
+            {isLoading ? (
+              <>
+                <Loader className="w-5 h-5 animate-spin" />
+                Signing In...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             Don't have an account?{' '}
-            <Link to="/register" className="text-blue-600 font-semibold hover:text-blue-500">
-              Sign up
+            <Link to="/register" className="text-blue-600 font-bold hover:text-cyan-500">
+              Sign Up
             </Link>
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            You must register first to access your account
           </p>
         </div>
       </div>

@@ -1,154 +1,206 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, User, Map } from 'lucide-react';
+import { Plane, User, Mail, Lock, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    // NOTE: Keep 'name' here for the input state, as the input label is "Full Name"
+    name: '', 
     email: '',
     password: '',
     confirmPassword: '',
   });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  // Handler for form input changes
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [e.target.name]: e.target.value, // Use input 'name' attribute to update state dynamically
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+    setError('');
+    setSuccess('');
+
+    // --- Validation Checks ---
+    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+      setError('All fields are required!');
       return;
     }
 
-    // Mock registration - in future, this will connect to backend
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long!');
+      return;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match!');
+      return;
+    }
+    // --- End Validation Checks ---
+
+    setIsLoading(true);
+
+    // CRITICAL FIX: The payload must contain 'username' to match the Mongoose schema.
     const userData = {
-      id: Date.now().toString(),
-      name: formData.name,
+      username: formData.name, // Sending the value from the 'name' input as 'username'
       email: formData.email,
+      password: formData.password,
     };
     
-    register(userData);
-    navigate('/dashboard');
+    try {
+      const result = await register(userData);
+      
+      if (result.success) {
+        setSuccess('Registration successful! Redirecting to dashboard...');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
+      } else {
+        // This handles validation errors caught by the backend and returned via AuthContext
+        setError(result.message); 
+      }
+    } catch (err) {
+        // Fallback for unexpected errors (like network or server crash)
+        setError(err.message || 'An unexpected error occurred during registration.');
+    }
+    
+    setIsLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-full">
-              <Map className="w-10 h-10 text-white" />
+            <div className="bg-gradient-to-r from-purple-600 to-pink-500 p-4 rounded-full shadow-lg">
+              <Plane className="w-12 h-12 text-white" />
             </div>
           </div>
-          <h2 className="text-3xl font-bold text-gray-800">Create Account</h2>
-          <p className="text-gray-600 mt-2">Start your travel journey today</p>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+            Start Your Journey
+          </h2>
+          <p className="text-gray-600 mt-2">Create your travel bucket list account</p>
         </div>
 
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+            <p className="text-green-700 text-sm">{success}</p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Full Name / Username Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <User className="w-4 h-4 inline mr-1" />
+              Full Name (Will be used as Username)
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="John Doe"
-                required
-              />
-            </div>
+            <input
+              type="text"
+              name="name" // Added 'name' attribute
+              value={formData.name}
+              onChange={handleChange} // Using the consolidated handleChange function
+              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition"
+              placeholder="John Doe"
+              required
+              disabled={isLoading}
+            />
           </div>
 
+          {/* Email Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <Mail className="w-4 h-4 inline mr-1" />
+              Email
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="you@example.com"
-                required
-              />
-            </div>
+            <input
+              type="email"
+              name="email" // Added 'name' attribute
+              value={formData.email}
+              onChange={handleChange} // Using the consolidated handleChange function
+              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition"
+              placeholder="you@example.com"
+              required
+              disabled={isLoading}
+            />
           </div>
 
+          {/* Password Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <Lock className="w-4 h-4 inline mr-1" />
               Password
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                required
-              />
-            </div>
+            <input
+              type="password"
+              name="password" // Added 'name' attribute
+              value={formData.password}
+              onChange={handleChange} // Using the consolidated handleChange function
+              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition"
+              placeholder="••••••••"
+              required
+              disabled={isLoading}
+            />
+            <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
           </div>
 
+          {/* Confirm Password Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <Lock className="w-4 h-4 inline mr-1" />
               Confirm Password
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                required
-              />
-            </div>
+            <input
+              type="password"
+              name="confirmPassword" // Added 'name' attribute
+              value={formData.confirmPassword}
+              onChange={handleChange} // Using the consolidated handleChange function
+              className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition"
+              placeholder="••••••••"
+              required
+              disabled={isLoading}
+            />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition duration-200 shadow-lg"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white py-4 rounded-xl font-bold text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Create Account
+            {isLoading ? (
+              <>
+                <Loader className="w-5 h-5 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              'Create Account'
+            )}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 font-semibold hover:text-blue-500">
-              Sign in
-            </Link>
-          </p>
-        </div>
+        <p className="text-center mt-6 text-gray-600">
+          Already have an account?{' '}
+          <Link to="/login" className="text-purple-600 font-bold hover:text-pink-500">
+            Sign In
+          </Link>
+        </p>
       </div>
     </div>
   );
