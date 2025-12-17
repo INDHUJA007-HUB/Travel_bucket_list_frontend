@@ -1,17 +1,18 @@
-// D:\TravelbucketList\travel_bucketlist\src\services\api.js
-
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// Change this line to use the Vite environment variable
+// Note: It MUST start with VITE_ to be visible in your frontend
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true, // IMPORTANT for sessions/cookies, but token is key
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true, 
 });
 
+// ... rest of your interceptor code remains the same
 // --- CRITICAL FIX: Intercept every request to add the token ---
 api.interceptors.request.use(
   (config) => {

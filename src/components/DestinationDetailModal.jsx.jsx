@@ -9,7 +9,7 @@ import { Cloud, MapPin, Loader, X, Info, ChevronRight } from 'lucide-react';
 Modal.setAppElement('#root'); 
 
 // Define the Backend URL (or import it from your services/api.js file if you use one)
-const API_BASE_URL = 'http://localhost:5000/api'; 
+const API_BASE_URL = 'import.meta.env.VITE_API_BASE_URL'; 
 
 const DestinationDetailModal = ({ isOpen, closeModal, destination }) => {
     const [weather, setWeather] = useState(null);
